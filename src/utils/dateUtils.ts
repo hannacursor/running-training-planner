@@ -7,7 +7,6 @@ import {
   isSameWeek,
   isWithinInterval,
   addDays,
-  startOfDay,
   isSameDay
 } from 'date-fns';
 import { TRAINING_START_DATE, TRAINING_END_DATE } from '../types';
