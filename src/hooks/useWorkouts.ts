@@ -1,42 +1,52 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Workout } from '../types';
-import { loadWorkouts, saveWorkouts, generateWorkoutId } from '../utils/storage';
+import { loadWorkouts, saveWorkout, deleteWorkout, generateWorkoutId } from '../utils/storage';
 
 export function useWorkouts() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load workouts from localStorage on mount
+  // Load workouts on mount (tries Supabase, falls back to localStorage)
   useEffect(() => {
-    const loaded = loadWorkouts();
-    setWorkouts(loaded);
-    setIsLoading(false);
+    const loadData = async () => {
+      const loaded = await loadWorkouts();
+      setWorkouts(loaded);
+      setIsLoading(false);
+    };
+    loadData();
   }, []);
 
-  // Save workouts to localStorage whenever they change
-  useEffect(() => {
-    if (!isLoading) {
-      saveWorkouts(workouts);
-    }
-  }, [workouts, isLoading]);
-
-  const addWorkout = useCallback((workout: Omit<Workout, 'id'>): Workout => {
+  const addWorkout = useCallback(async (workout: Omit<Workout, 'id'>): Promise<Workout> => {
     const newWorkout: Workout = {
       ...workout,
       id: generateWorkoutId(),
     };
     
+    // Save to backend/localStorage
+    await saveWorkout(newWorkout);
+    
     setWorkouts(prev => [...prev, newWorkout]);
     return newWorkout;
   }, []);
 
-  const updateWorkout = useCallback((id: string, updates: Partial<Workout>): void => {
-    setWorkouts(prev =>
-      prev.map(w => (w.id === id ? { ...w, ...updates } : w))
-    );
-  }, []);
+  const updateWorkout = useCallback(async (id: string, updates: Partial<Workout>): Promise<void> => {
+    const updatedWorkout = workouts.find(w => w.id === id);
+    if (!updatedWorkout) return;
 
-  const deleteWorkout = useCallback((id: string): void => {
+    const newWorkout = { ...updatedWorkout, ...updates };
+    
+    // Save to backend/localStorage
+    await saveWorkout(newWorkout);
+    
+    setWorkouts(prev =>
+      prev.map(w => (w.id === id ? newWorkout : w))
+    );
+  }, [workouts]);
+
+  const deleteWorkoutHandler = useCallback(async (id: string): Promise<void> => {
+    // Delete from backend/localStorage
+    await deleteWorkout(id);
+    
     setWorkouts(prev => prev.filter(w => w.id !== id));
   }, []);
 
@@ -53,7 +63,7 @@ export function useWorkouts() {
     isLoading,
     addWorkout,
     updateWorkout,
-    deleteWorkout,
+    deleteWorkout: deleteWorkoutHandler,
     getWorkout,
     getWorkoutsForDate,
   };

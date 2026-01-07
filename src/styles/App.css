@@ -21,10 +21,57 @@ body {
   padding: 20px;
 }
 
+.app-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.username {
+  color: #1976d2;
+  font-size: 0.9rem;
+}
+
+.view-only-badge {
+  background: #ff9800;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.logout-button {
+  padding: 8px 16px;
+  background: #bbdefb;
+  color: #1565c0;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-weight: 500;
+}
+
+.logout-button:hover {
+  background: #90caf9;
+}
+
 /* Calendar Header */
 .calendar-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 0;
+  flex: 1;
 }
 
 .calendar-header h1 {
@@ -129,6 +176,15 @@ body {
   background: #f5f5f5;
 }
 
+.calendar-day.view-only {
+  cursor: default !important;
+}
+
+.calendar-day.view-only:hover {
+  border-color: #bbdefb;
+  box-shadow: none;
+}
+
 .day-header {
   display: flex;
   justify-content: space-between;
@@ -186,6 +242,10 @@ body {
   text-align: center;
   padding: 20px 0;
   font-style: italic;
+}
+
+.add-workout-hint.view-only {
+  color: #ff9800;
 }
 
 /* Workout Card */

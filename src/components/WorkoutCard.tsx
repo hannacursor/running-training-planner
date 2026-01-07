@@ -2,14 +2,15 @@ import { Workout } from '../types';
 
 interface WorkoutCardProps {
   workout: Workout;
-  onUpdate: (id: string, updates: Partial<Workout>) => void;
-  onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<Workout>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   onEdit: () => void;
+  canEdit: boolean;
 }
 
-export function WorkoutCard({ workout, onUpdate, onDelete, onEdit }: WorkoutCardProps) {
-  const handleCompleteToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate(workout.id, { completed: e.target.checked });
+export function WorkoutCard({ workout, onUpdate, onDelete, onEdit, canEdit }: WorkoutCardProps) {
+  const handleCompleteToggle = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    await onUpdate(workout.id, { completed: e.target.checked });
   };
 
   const getWorkoutTypeColorScheme = (type: string) => {
@@ -72,22 +73,24 @@ export function WorkoutCard({ workout, onUpdate, onDelete, onEdit }: WorkoutCard
     >
       <div className="workout-card-header">
         <div className="workout-type" style={{ color: colorScheme.text }}>{workout.workoutType}</div>
-        <div className="workout-actions">
-          <button className="btn-icon" onClick={onEdit} title="Edit" style={{ color: colorScheme.text }}>
-            ✏️
-          </button>
-          <button 
-            className="btn-icon" 
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(workout.id);
-            }}
-            title="Delete"
-            style={{ color: colorScheme.text }}
-          >
-            🗑️
-          </button>
-        </div>
+        {canEdit && (
+          <div className="workout-actions">
+            <button className="btn-icon" onClick={onEdit} title="Edit" style={{ color: colorScheme.text }}>
+              ✏️
+            </button>
+            <button 
+              className="btn-icon" 
+              onClick={async (e) => {
+                e.stopPropagation();
+                await onDelete(workout.id);
+              }}
+              title="Delete"
+              style={{ color: colorScheme.text }}
+            >
+              🗑️
+            </button>
+          </div>
+        )}
       </div>
       
       <div className="workout-card-body">
@@ -111,17 +114,19 @@ export function WorkoutCard({ workout, onUpdate, onDelete, onEdit }: WorkoutCard
         )}
       </div>
 
-      <div className="workout-card-footer" style={{ borderTopColor: colorScheme.borderLeft }}>
-        <label className="checkbox-label" onClick={(e) => e.stopPropagation()} style={{ color: colorScheme.text }}>
-          <input
-            type="checkbox"
-            checked={workout.completed}
-            onChange={handleCompleteToggle}
-            onClick={(e) => e.stopPropagation()}
-          />
-          <span>Completed</span>
-        </label>
-      </div>
+      {canEdit && (
+        <div className="workout-card-footer" style={{ borderTopColor: colorScheme.borderLeft }}>
+          <label className="checkbox-label" onClick={(e) => e.stopPropagation()} style={{ color: colorScheme.text }}>
+            <input
+              type="checkbox"
+              checked={workout.completed}
+              onChange={handleCompleteToggle}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <span>Completed</span>
+          </label>
+        </div>
+      )}
     </div>
   );
 }

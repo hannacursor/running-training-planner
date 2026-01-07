@@ -8,12 +8,13 @@ import { formatDayName, formatDayNumber } from '../utils/dateUtils';
 
 interface CalendarProps {
   workouts: Workout[];
-  onUpdateWorkout: (id: string, updates: Partial<Workout>) => void;
-  onDeleteWorkout: (id: string) => void;
-  onAddWorkout: (workout: Omit<Workout, 'id'>) => void;
+  onUpdateWorkout: (id: string, updates: Partial<Workout>) => Promise<void>;
+  onDeleteWorkout: (id: string) => Promise<void>;
+  onAddWorkout: (workout: Omit<Workout, 'id'>) => Promise<Workout>;
+  canEdit: boolean;
 }
 
-export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWorkout }: CalendarProps) {
+export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWorkout, canEdit }: CalendarProps) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
 
@@ -21,29 +22,31 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
   const today = new Date();
 
   const handleDayClick = (date: Date) => {
-    if (!isInTrainingRange(date)) return;
+    if (!isInTrainingRange(date) || !canEdit) return;
     setSelectedDate(toISODate(date));
     setEditingWorkout(null);
   };
 
   const handleWorkoutEdit = (workout: Workout) => {
+    if (!canEdit) return;
     setEditingWorkout(workout);
     setSelectedDate(null);
   };
 
   const handleWorkoutClick = (workout: Workout, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!canEdit) return;
     handleWorkoutEdit(workout);
   };
 
-  const handleAddWorkout = (workout: Omit<Workout, 'id'>) => {
-    onAddWorkout(workout);
+  const handleAddWorkout = async (workout: Omit<Workout, 'id'>) => {
+    await onAddWorkout(workout);
     setSelectedDate(null);
   };
 
-  const handleUpdateWorkout = (workout: Omit<Workout, 'id'>) => {
+  const handleUpdateWorkout = async (workout: Omit<Workout, 'id'>) => {
     if (editingWorkout) {
-      onUpdateWorkout(editingWorkout.id, workout);
+      await onUpdateWorkout(editingWorkout.id, workout);
       setEditingWorkout(null);
     }
   };
@@ -81,8 +84,9 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
                   return (
                     <div
                       key={day.toISOString()}
-                      className={`calendar-day ${!isInRange ? 'out-of-range' : ''} ${isTodayDate ? 'today' : ''}`}
+                      className={`calendar-day ${!isInRange ? 'out-of-range' : ''} ${isTodayDate ? 'today' : ''} ${!canEdit && isInRange ? 'view-only' : ''}`}
                       onClick={() => handleDayClick(day)}
+                      style={{ cursor: !canEdit && isInRange ? 'default' : undefined }}
                     >
                       <div className="day-header">
                         <div className="day-name">{formatDayName(day)}</div>
@@ -95,20 +99,25 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
                         {dayWorkouts.map((workout) => (
                           <div
                             key={workout.id}
-                            onClick={(e) => handleWorkoutClick(workout, e)}
+                            onClick={canEdit ? (e) => handleWorkoutClick(workout, e) : undefined}
+                            style={{ cursor: canEdit ? 'pointer' : 'default' }}
                           >
                             <WorkoutCard
                               workout={workout}
                               onUpdate={onUpdateWorkout}
                               onDelete={onDeleteWorkout}
                               onEdit={() => handleWorkoutEdit(workout)}
+                              canEdit={canEdit}
                             />
                           </div>
                         ))}
                       </div>
                       
-                      {isInRange && dayWorkouts.length === 0 && (
+                      {isInRange && dayWorkouts.length === 0 && canEdit && (
                         <div className="add-workout-hint">Click to add workout</div>
+                      )}
+                      {isInRange && dayWorkouts.length === 0 && !canEdit && (
+                        <div className="add-workout-hint view-only">View only mode</div>
                       )}
                     </div>
                   );
@@ -119,7 +128,7 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
         );
       })}
 
-      {selectedDate && (
+      {selectedDate && canEdit && (
         <WorkoutForm
           defaultDate={selectedDate}
           onSave={handleAddWorkout}
@@ -127,7 +136,7 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
         />
       )}
 
-      {editingWorkout && (
+      {editingWorkout && canEdit && (
         <WorkoutForm
           workout={editingWorkout}
           onSave={handleUpdateWorkout}

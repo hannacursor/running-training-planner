@@ -20,3 +20,9 @@ export interface WeekSummary {
   completedMiles: number;
 }
 
+export type UserRole = 'admin' | 'viewer';
+
+export interface User {
+  username: string;
+  role: UserRole;
+}
