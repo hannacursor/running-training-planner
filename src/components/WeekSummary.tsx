@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Workout, ZoneDistribution } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import { parseISO, startOfWeek, endOfWeek, startOfDay } from 'date-fns';
@@ -23,7 +23,6 @@ function formatZoneTime(seconds: number): string {
 }
 
 export function WeekSummary({ weekStart, workouts, weekNumber }: WeekSummaryProps) {
-  const [showZones, setShowZones] = useState(false);
 
   const summary = useMemo(() => {
     // Ensure weekStart is normalized to Monday at start of day
@@ -88,18 +87,10 @@ export function WeekSummary({ weekStart, workouts, weekNumber }: WeekSummaryProp
           <span className="stat-label">Progress:</span>
           <span className="stat-value">{summary.progress}%</span>
         </div>
-        {summary.hasZoneData && (
-          <button 
-            className="zone-toggle-btn"
-            onClick={() => setShowZones(!showZones)}
-          >
-            ❤️ {showZones ? 'Hide' : 'Show'} HR Zones
-          </button>
-        )}
       </div>
 
-      {/* Weekly HR Zone Distribution */}
-      {showZones && summary.hasZoneData && (
+      {/* Weekly HR Zone Distribution - always visible when data exists */}
+      {summary.hasZoneData && (
         <div className="week-zone-summary">
           <div className="week-zone-bar">
             {summary.zoneAggregates.map((time, index) => {
