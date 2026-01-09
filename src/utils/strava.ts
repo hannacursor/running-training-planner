@@ -2,7 +2,6 @@ import { StravaActivity, StravaToken, Workout } from '../types';
 import { parseISO, isSameDay } from 'date-fns';
 
 const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID;
-const STRAVA_REDIRECT_URI = import.meta.env.VITE_STRAVA_REDIRECT_URI || window.location.origin;
 const STRAVA_API_BASE = 'https://www.strava.com/api/v3';
 
 const STORAGE_KEY = 'strava_token';
