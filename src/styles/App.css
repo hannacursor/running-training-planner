@@ -248,6 +248,139 @@ body {
   color: #ff9800;
 }
 
+/* Inline Workout Form */
+.inline-workout-form {
+  background: #fff;
+  border: 2px solid #64b5f6;
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(100, 181, 246, 0.3);
+}
+
+.inline-form-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.inline-form-row:last-of-type {
+  margin-bottom: 0;
+}
+
+.inline-select {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: #f5f5f5;
+  color: #333;
+  cursor: pointer;
+}
+
+.inline-select:focus {
+  outline: none;
+  border-color: #64b5f6;
+}
+
+.inline-label {
+  font-size: 0.75rem;
+  color: #666;
+  min-width: 45px;
+}
+
+.inline-input {
+  width: 60px;
+  padding: 5px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: #f5f5f5;
+  color: #333;
+  text-align: right;
+}
+
+.inline-input:focus {
+  outline: none;
+  border-color: #64b5f6;
+}
+
+.inline-unit {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.inline-textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: #f5f5f5;
+  color: #333;
+  resize: none;
+  font-family: inherit;
+}
+
+.inline-textarea:focus {
+  outline: none;
+  border-color: #64b5f6;
+}
+
+.inline-textarea::placeholder {
+  color: #999;
+}
+
+.inline-error {
+  font-size: 0.75rem;
+  color: #f44336;
+  margin-bottom: 6px;
+}
+
+.inline-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.inline-btn-save,
+.inline-btn-cancel {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.inline-btn-save {
+  background: #4CAF50;
+  color: white;
+}
+
+.inline-btn-save:hover {
+  background: #43a047;
+  transform: scale(1.05);
+}
+
+.inline-btn-cancel {
+  background: #e0e0e0;
+  color: #666;
+}
+
+.inline-btn-cancel:hover {
+  background: #bdbdbd;
+  transform: scale(1.05);
+}
+
 /* Workout Card */
 .workout-card {
   border-radius: 4px;
@@ -426,19 +559,20 @@ body {
   line-height: 1;
 }
 
-/* Workout Form Modal */
+/* Modal Overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .modal-content {
