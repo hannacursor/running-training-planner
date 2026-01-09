@@ -165,17 +165,22 @@ export function WorkoutCard({ workout, onUpdate, onDelete, canEdit, isEditing, o
             </div>
             
             {(workout.actualMileage !== undefined && workout.actualMileage > 0) && (
-              <div className="workout-mileage">
-                <span className="mileage-label" style={{ color: colorScheme.label }}>Actual:</span>
-                <span className="mileage-value" style={{ color: colorScheme.text }}>
-                  {workout.actualMileage.toFixed(2)} mi
-                </span>
-                {pace && (
-                  <span className="pace-value" style={{ color: colorScheme.label, marginLeft: '8px' }}>
-                    ({pace} /mi)
+              <>
+                <div className="workout-mileage">
+                  <span className="mileage-label" style={{ color: colorScheme.label }}>Actual:</span>
+                  <span className="mileage-value" style={{ color: colorScheme.text }}>
+                    {workout.actualMileage.toFixed(2)} mi
                   </span>
+                </div>
+                {pace && (
+                  <div className="workout-mileage">
+                    <span className="mileage-label" style={{ color: colorScheme.label }}>Pace:</span>
+                    <span className="mileage-value" style={{ color: colorScheme.text }}>
+                      {pace} /mi
+                    </span>
+                  </div>
                 )}
-              </div>
+              </>
             )}
 
             <textarea
@@ -228,17 +233,22 @@ export function WorkoutCard({ workout, onUpdate, onDelete, canEdit, isEditing, o
         </div>
         
         {(workout.actualMileage !== undefined && workout.actualMileage > 0) && (
-          <div className="workout-mileage">
-            <span className="mileage-label" style={{ color: colorScheme.label }}>Actual:</span>
-            <span className="mileage-value" style={{ color: colorScheme.text }}>
-              {workout.actualMileage.toFixed(2)} mi
-            </span>
-            {pace && (
-              <span className="pace-value" style={{ color: colorScheme.label, marginLeft: '8px' }}>
-                ({pace} /mi)
+          <>
+            <div className="workout-mileage">
+              <span className="mileage-label" style={{ color: colorScheme.label }}>Actual:</span>
+              <span className="mileage-value" style={{ color: colorScheme.text }}>
+                {workout.actualMileage.toFixed(2)} mi
               </span>
+            </div>
+            {pace && (
+              <div className="workout-mileage">
+                <span className="mileage-label" style={{ color: colorScheme.label }}>Pace:</span>
+                <span className="mileage-value" style={{ color: colorScheme.text }}>
+                  {pace} /mi
+                </span>
+              </div>
             )}
-          </div>
+          </>
         )}
 
         {workout.stravaActivity && (
