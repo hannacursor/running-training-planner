@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Workout, WorkoutType } from '../types';
 import { secondsToPace } from '../utils/strava';
 import { ActivityDetailModal } from './ActivityDetailModal';
@@ -300,9 +301,9 @@ export function WorkoutCard({ workout, onUpdate, onDelete, canEdit, isEditing, o
   );
 }
 
-// Delete confirmation dialog component
+// Delete confirmation dialog component - uses portal to render at body level
 function DeleteConfirmDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onCancel}>
       <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
         <div className="delete-confirm-icon">🗑️</div>
@@ -313,7 +314,8 @@ function DeleteConfirmDialog({ onConfirm, onCancel }: { onConfirm: () => void; o
           <button className="btn-danger" onClick={onConfirm}>Delete</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
