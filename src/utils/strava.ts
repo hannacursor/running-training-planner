@@ -72,7 +72,13 @@ export async function exchangeStravaCode(code: string): Promise<StravaToken | nu
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(errorData.error || 'Failed to exchange code for token');
+      const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+      console.error('Strava token exchange failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();

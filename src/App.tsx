@@ -25,13 +25,24 @@ function App() {
 
     if (code) {
       // Exchange code for token
-      exchangeStravaCode(code).then((token) => {
-        if (token) {
-          // Store token (handled in exchangeStravaCode)
+      exchangeStravaCode(code)
+        .then((token) => {
+          if (token) {
+            // Store token (handled in exchangeStravaCode)
+            console.log('Strava token exchange successful');
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } else {
+            console.error('Strava token exchange failed: No token returned');
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        })
+        .catch((err) => {
+          console.error('Strava token exchange error:', err);
           // Clean up URL
           window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      });
+        });
     } else if (error) {
       console.error('Strava OAuth error:', error);
       // Clean up URL
