@@ -3,7 +3,7 @@ import { User, UserRole } from '../types';
 // Hardcoded users (in production, these would be in a database)
 const USERS: Record<string, { password: string; role: UserRole }> = {
   'hannawintz': {
-    password: 'pplpwithfire',
+    password: 'hannawintz_2026!',
     role: 'admin'
   },
   'guest': {
