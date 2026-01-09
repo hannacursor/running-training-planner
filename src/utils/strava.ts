@@ -241,6 +241,7 @@ export async function fetchAthleteZones(accessToken: string): Promise<AthleteZon
 
 /**
  * Fetch activity zones (time in each HR zone)
+ * Note: This may fail with 402 if rate limited or requires Strava premium
  */
 export async function fetchActivityZones(
   accessToken: string,
@@ -257,8 +258,11 @@ export async function fetchActivityZones(
     );
 
     if (!response.ok) {
-      // Activity might not have HR data
-      if (response.status === 404) {
+      // 404 = Activity doesn't have HR data
+      // 402 = Rate limited or premium required
+      // 401/403 = Auth issues
+      if (response.status === 404 || response.status === 402 || response.status === 401 || response.status === 403) {
+        console.log(`Zones not available for activity ${activityId} (status: ${response.status})`);
         return null;
       }
       throw new Error(`Strava API error: ${response.status}`);
@@ -283,6 +287,13 @@ export async function fetchActivityZones(
     console.error('Error fetching activity zones:', error);
     return null;
   }
+}
+
+/**
+ * Small delay helper to avoid rate limiting
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
@@ -334,11 +345,17 @@ export async function syncStravaActivities(
     if (workout) {
       matched++;
       
+      // Add small delay between API calls to avoid rate limiting
+      await delay(200);
+      
       // Fetch detailed activity data (includes segment efforts)
       const detailedActivity = await fetchStravaActivityDetail(token, activity.id);
       const activityData = detailedActivity || activity;
       
-      // Fetch HR zone distribution for this activity
+      // Add another small delay before zones request
+      await delay(200);
+      
+      // Fetch HR zone distribution for this activity (may fail if rate limited)
       const zoneDistribution = await fetchActivityZones(token, activity.id);
       if (zoneDistribution) {
         activityData.zone_distribution = zoneDistribution;
