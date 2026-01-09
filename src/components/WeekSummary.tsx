@@ -1,7 +1,11 @@
-import { useMemo } from 'react';
-import { Workout } from '../types';
+import { useMemo, useState } from 'react';
+import { Workout, ZoneDistribution } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import { parseISO, startOfWeek, endOfWeek, startOfDay } from 'date-fns';
+
+// Zone colors and names
+const ZONE_COLORS = ['#90CAF9', '#81C784', '#FFD54F', '#FF8A65', '#E57373'];
+const ZONE_NAMES = ['Recovery', 'Endurance', 'Tempo', 'Threshold', 'Anaerobic'];
 
 interface WeekSummaryProps {
   weekStart: Date;
@@ -9,7 +13,18 @@ interface WeekSummaryProps {
   weekNumber: number;
 }
 
+function formatZoneTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+}
+
 export function WeekSummary({ weekStart, workouts, weekNumber }: WeekSummaryProps) {
+  const [showZones, setShowZones] = useState(false);
+
   const summary = useMemo(() => {
     // Ensure weekStart is normalized to Monday at start of day
     const normalizedWeekStart = startOfDay(startOfWeek(weekStart, { weekStartsOn: 1 }));
@@ -28,10 +43,30 @@ export function WeekSummary({ weekStart, workouts, weekNumber }: WeekSummaryProp
 
     const progress = plannedMiles > 0 ? (completedMiles / plannedMiles) * 100 : 0;
 
+    // Aggregate zone distribution from all activities in the week
+    const zoneAggregates: number[] = [0, 0, 0, 0, 0]; // 5 zones
+    let hasZoneData = false;
+
+    weekWorkouts.forEach(w => {
+      if (w.stravaActivity?.zone_distribution) {
+        hasZoneData = true;
+        w.stravaActivity.zone_distribution.forEach((zone: ZoneDistribution) => {
+          if (zone.zone >= 1 && zone.zone <= 5) {
+            zoneAggregates[zone.zone - 1] += zone.time;
+          }
+        });
+      }
+    });
+
+    const totalZoneTime = zoneAggregates.reduce((sum, t) => sum + t, 0);
+
     return {
       plannedMiles: Math.round(plannedMiles * 10) / 10,
       completedMiles: Math.round(completedMiles * 10) / 10,
       progress: Math.round(progress),
+      zoneAggregates,
+      totalZoneTime,
+      hasZoneData,
     };
   }, [weekStart, workouts]);
 
@@ -53,7 +88,57 @@ export function WeekSummary({ weekStart, workouts, weekNumber }: WeekSummaryProp
           <span className="stat-label">Progress:</span>
           <span className="stat-value">{summary.progress}%</span>
         </div>
+        {summary.hasZoneData && (
+          <button 
+            className="zone-toggle-btn"
+            onClick={() => setShowZones(!showZones)}
+          >
+            ❤️ {showZones ? 'Hide' : 'Show'} HR Zones
+          </button>
+        )}
       </div>
+
+      {/* Weekly HR Zone Distribution */}
+      {showZones && summary.hasZoneData && (
+        <div className="week-zone-summary">
+          <div className="week-zone-bar">
+            {summary.zoneAggregates.map((time, index) => {
+              const percentage = summary.totalZoneTime > 0 
+                ? (time / summary.totalZoneTime) * 100 
+                : 0;
+              if (percentage < 1) return null;
+              return (
+                <div
+                  key={index}
+                  className="week-zone-segment"
+                  style={{
+                    width: `${percentage}%`,
+                    backgroundColor: ZONE_COLORS[index],
+                  }}
+                  title={`Z${index + 1} ${ZONE_NAMES[index]}: ${formatZoneTime(time)} (${percentage.toFixed(0)}%)`}
+                />
+              );
+            })}
+          </div>
+          <div className="week-zone-legend">
+            {summary.zoneAggregates.map((time, index) => {
+              if (time === 0) return null;
+              const percentage = (time / summary.totalZoneTime) * 100;
+              return (
+                <div key={index} className="zone-legend-item">
+                  <span 
+                    className="zone-legend-color" 
+                    style={{ backgroundColor: ZONE_COLORS[index] }}
+                  />
+                  <span className="zone-legend-text">
+                    Z{index + 1}: {formatZoneTime(time)} ({percentage.toFixed(0)}%)
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

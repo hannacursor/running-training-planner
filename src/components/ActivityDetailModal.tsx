@@ -89,6 +89,70 @@ function metersToMiles(meters: number): number {
   return meters * 0.000621371;
 }
 
+// Zone colors matching typical HR zone colors
+const ZONE_COLORS = [
+  '#90CAF9', // Zone 1 - Light blue (Recovery)
+  '#81C784', // Zone 2 - Green (Endurance)  
+  '#FFD54F', // Zone 3 - Yellow (Tempo)
+  '#FF8A65', // Zone 4 - Orange (Threshold)
+  '#E57373', // Zone 5 - Red (Anaerobic)
+];
+
+const ZONE_NAMES = [
+  'Recovery',
+  'Endurance',
+  'Tempo',
+  'Threshold',
+  'Anaerobic',
+];
+
+interface HRZoneChartProps {
+  zones: Array<{ zone: number; min: number; max: number; time: number }>;
+}
+
+function HRZoneChart({ zones }: HRZoneChartProps) {
+  const totalTime = zones.reduce((sum, z) => sum + z.time, 0);
+  
+  if (totalTime === 0) return null;
+
+  return (
+    <div className="hr-zone-chart">
+      {zones.map((zone, index) => {
+        const percentage = (zone.time / totalTime) * 100;
+        const minutes = Math.floor(zone.time / 60);
+        const seconds = zone.time % 60;
+        const timeStr = minutes > 0 
+          ? `${minutes}m ${seconds}s`
+          : `${seconds}s`;
+        
+        return (
+          <div key={zone.zone} className="zone-row">
+            <div className="zone-label">
+              <span className="zone-number" style={{ backgroundColor: ZONE_COLORS[index] }}>
+                Z{zone.zone}
+              </span>
+              <span className="zone-name">{ZONE_NAMES[index]}</span>
+            </div>
+            <div className="zone-bar-container">
+              <div 
+                className="zone-bar"
+                style={{ 
+                  width: `${Math.max(percentage, 2)}%`,
+                  backgroundColor: ZONE_COLORS[index],
+                }}
+              />
+            </div>
+            <div className="zone-stats">
+              <span className="zone-time">{timeStr}</span>
+              <span className="zone-percent">{percentage.toFixed(0)}%</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ActivityDetailModal({ activity, onClose }: ActivityDetailModalProps) {
   const miles = metersToMiles(activity.distance);
   const pace = secondsToPace(activity.moving_time, activity.distance);
@@ -214,6 +278,14 @@ export function ActivityDetailModal({ activity, onClose }: ActivityDetailModalPr
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* HR Zone Distribution Chart */}
+          {activity.zone_distribution && activity.zone_distribution.length > 0 && (
+            <div className="activity-section">
+              <h3>📊 Time in HR Zones</h3>
+              <HRZoneChart zones={activity.zone_distribution} />
             </div>
           )}
 

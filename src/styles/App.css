@@ -560,6 +560,117 @@ body {
   font-weight: bold;
 }
 
+/* Delete Confirmation Modal */
+.delete-confirm-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.delete-confirm-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.delete-confirm-modal h3 {
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 1.3rem;
+}
+
+.delete-confirm-modal p {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-danger {
+  padding: 10px 24px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: #d32f2f;
+}
+
+/* Week Zone Summary */
+.zone-toggle-btn {
+  padding: 6px 14px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.zone-toggle-btn:hover {
+  background: #bbdefb;
+}
+
+.week-zone-summary {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #bbdefb;
+}
+
+.week-zone-bar {
+  display: flex;
+  height: 24px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #e9ecef;
+}
+
+.week-zone-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.week-zone-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.zone-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zone-legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.zone-legend-text {
+  font-size: 0.75rem;
+  color: #555;
+}
+
 .strava-detail-btn {
   margin-top: 8px;
   padding: 6px 12px;

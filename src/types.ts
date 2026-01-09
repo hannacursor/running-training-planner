@@ -51,6 +51,7 @@ export interface StravaActivity {
     resource_state: number;
   };
   segment_efforts?: SegmentEffort[];
+  zone_distribution?: ZoneDistribution[]; // Time in each HR zone
 }
 
 export interface SegmentEffort {
@@ -85,4 +86,23 @@ export interface StravaToken {
   refresh_token: string;
   expires_at: number; // Unix timestamp
   athlete_id?: number;
+}
+
+// HR Zone distribution for an activity
+export interface ZoneDistribution {
+  zone: number; // 1-5
+  min: number; // BPM
+  max: number; // BPM (-1 = no limit)
+  time: number; // seconds in this zone
+}
+
+// Athlete's configured HR zones
+export interface AthleteZones {
+  heart_rate: {
+    custom_zones: boolean;
+    zones: Array<{
+      min: number;
+      max: number;
+    }>;
+  };
 }

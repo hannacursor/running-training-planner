@@ -17,6 +17,7 @@ const WORKOUT_TYPES: WorkoutType[] = ['Easy Run', 'Threshold', 'Intervals', 'Lon
 
 export function WorkoutCard({ workout, onUpdate, onDelete, canEdit, isEditing, onCancelEdit }: WorkoutCardProps) {
   const [showActivityDetail, setShowActivityDetail] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   // Editing state
   const [editWorkoutType, setEditWorkoutType] = useState<WorkoutType>(workout.workoutType);
@@ -206,9 +207,9 @@ export function WorkoutCard({ workout, onUpdate, onDelete, canEdit, isEditing, o
           <div className="workout-actions">
             <button 
               className="btn-icon" 
-              onClick={async (e) => {
+              onClick={(e) => {
                 e.stopPropagation();
-                await onDelete(workout.id);
+                setShowDeleteConfirm(true);
               }}
               title="Delete"
               style={{ color: colorScheme.text }}
@@ -285,6 +286,33 @@ export function WorkoutCard({ workout, onUpdate, onDelete, canEdit, isEditing, o
           onClose={() => setShowActivityDetail(false)}
         />
       )}
+
+      {showDeleteConfirm && (
+        <DeleteConfirmDialog
+          onConfirm={async () => {
+            setShowDeleteConfirm(false);
+            await onDelete(workout.id);
+          }}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Delete confirmation dialog component
+function DeleteConfirmDialog({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="delete-confirm-icon">🗑️</div>
+        <h3>Delete Workout?</h3>
+        <p>Are you sure you want to delete this workout? This action cannot be undone.</p>
+        <div className="delete-confirm-actions">
+          <button className="btn-secondary" onClick={onCancel}>Cancel</button>
+          <button className="btn-danger" onClick={onConfirm}>Delete</button>
+        </div>
+      </div>
     </div>
   );
 }

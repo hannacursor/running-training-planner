@@ -1,4 +1,4 @@
-import { StravaActivity, StravaToken, Workout } from '../types';
+import { StravaActivity, StravaToken, Workout, ZoneDistribution, AthleteZones } from '../types';
 import { parseISO, isSameDay } from 'date-fns';
 
 const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID;
@@ -215,6 +215,77 @@ export async function fetchStravaActivityDetail(
 }
 
 /**
+ * Fetch athlete's configured HR zones
+ */
+export async function fetchAthleteZones(accessToken: string): Promise<AthleteZones | null> {
+  try {
+    const response = await fetch(
+      `${STRAVA_API_BASE}/athlete/zones`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Strava API error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching athlete zones:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch activity zones (time in each HR zone)
+ */
+export async function fetchActivityZones(
+  accessToken: string,
+  activityId: number
+): Promise<ZoneDistribution[] | null> {
+  try {
+    const response = await fetch(
+      `${STRAVA_API_BASE}/activities/${activityId}/zones`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      // Activity might not have HR data
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`Strava API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Find heart rate distribution
+    const hrData = data.find((d: any) => d.type === 'heartrate');
+    if (!hrData || !hrData.distribution_buckets) {
+      return null;
+    }
+
+    // Map to our ZoneDistribution format
+    return hrData.distribution_buckets.map((bucket: any, index: number) => ({
+      zone: index + 1,
+      min: bucket.min,
+      max: bucket.max,
+      time: bucket.time,
+    }));
+  } catch (error) {
+    console.error('Error fetching activity zones:', error);
+    return null;
+  }
+}
+
+/**
  * Convert meters to miles
  */
 function metersToMiles(meters: number): number {
@@ -266,6 +337,12 @@ export async function syncStravaActivities(
       // Fetch detailed activity data (includes segment efforts)
       const detailedActivity = await fetchStravaActivityDetail(token, activity.id);
       const activityData = detailedActivity || activity;
+      
+      // Fetch HR zone distribution for this activity
+      const zoneDistribution = await fetchActivityZones(token, activity.id);
+      if (zoneDistribution) {
+        activityData.zone_distribution = zoneDistribution;
+      }
       
       const miles = Math.round(metersToMiles(activityData.distance) * 100) / 100;
       

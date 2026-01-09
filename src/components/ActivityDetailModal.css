@@ -248,6 +248,76 @@
   font-style: italic;
 }
 
+/* HR Zone Chart */
+.hr-zone-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.zone-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.zone-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 110px;
+}
+
+.zone-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #333;
+}
+
+.zone-name {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.zone-bar-container {
+  flex: 1;
+  height: 24px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.zone-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  min-width: 4px;
+}
+
+.zone-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 60px;
+}
+
+.zone-time {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.zone-percent {
+  font-size: 0.7rem;
+  color: #666;
+}
+
 /* Responsive */
 @media (max-width: 500px) {
   .activity-stats-grid {
