@@ -1,0 +1,115 @@
+.strava-sync {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.strava-sync-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.strava-sync-header h3 {
+  font-size: 1.2rem;
+  color: #1565c0;
+  margin: 0;
+}
+
+.btn-disconnect {
+  padding: 6px 12px;
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #c62828;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-disconnect:hover {
+  background: #ffcdd2;
+}
+
+.strava-connect {
+  text-align: center;
+}
+
+.strava-connect p {
+  color: #616161;
+  margin-bottom: 16px;
+}
+
+.btn-strava {
+  padding: 12px 24px;
+  background: #fc4c02;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-strava:hover {
+  background: #e63900;
+}
+
+.strava-synced {
+  text-align: center;
+}
+
+.strava-status {
+  color: #4caf50;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.btn-sync {
+  padding: 10px 20px;
+  background: #42a5f5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-bottom: 12px;
+}
+
+.btn-sync:hover:not(:disabled) {
+  background: #2196f3;
+}
+
+.btn-sync:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sync-result {
+  margin-top: 16px;
+  padding: 12px;
+  background: #e8f5e9;
+  border-radius: 6px;
+  color: #2e7d32;
+}
+
+.sync-result p {
+  margin: 4px 0;
+  font-size: 0.9rem;
+}
+
+.sync-error {
+  margin-top: 12px;
+  padding: 12px;
+  background: #ffebee;
+  border-radius: 6px;
+  color: #c62828;
+  font-size: 0.9rem;
+}
+

@@ -3,7 +3,9 @@ import { useWorkouts } from './hooks/useWorkouts';
 import { Calendar } from './components/Calendar';
 import { CalendarHeader } from './components/CalendarHeader';
 import { Login } from './components/Login';
+import { StravaSync } from './components/StravaSync';
 import { isAuthenticated, getCurrentUser, logout, canEdit } from './utils/auth';
+import { exchangeStravaCode } from './utils/strava';
 import './styles/App.css';
 
 function App() {
@@ -14,6 +16,26 @@ function App() {
     // Check if user is already logged in
     if (isAuthenticated()) {
       setIsLoggedIn(true);
+    }
+
+    // Handle Strava OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const error = urlParams.get('error');
+
+    if (code) {
+      // Exchange code for token
+      exchangeStravaCode(code).then((token) => {
+        if (token) {
+          // Store token (handled in exchangeStravaCode)
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      });
+    } else if (error) {
+      console.error('Strava OAuth error:', error);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
@@ -47,6 +69,13 @@ function App() {
           </button>
         </div>
       </div>
+      {hasEditPermission && (
+        <StravaSync
+          workouts={workouts}
+          onUpdateWorkout={updateWorkout}
+          canEdit={hasEditPermission}
+        />
+      )}
       <Calendar
         workouts={workouts}
         onAddWorkout={hasEditPermission ? addWorkout : async () => ({ id: '', date: '', plannedMileage: 0, workoutType: 'Easy Run', completed: false })}

@@ -26,3 +26,20 @@ export interface User {
   username: string;
   role: UserRole;
 }
+
+export interface StravaActivity {
+  id: number;
+  name: string;
+  distance: number; // in meters
+  moving_time: number; // in seconds
+  start_date: string; // ISO 8601 date string
+  type: string; // Activity type (Run, Ride, etc.)
+  workout_type?: number; // Strava workout type
+}
+
+export interface StravaToken {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number; // Unix timestamp
+  athlete_id?: number;
+}
