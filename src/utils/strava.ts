@@ -248,6 +248,7 @@ export async function fetchActivityZones(
   activityId: number
 ): Promise<ZoneDistribution[] | null> {
   try {
+    console.log(`[Zones API] Requesting zones for activity ${activityId}`);
     const response = await fetch(
       `${STRAVA_API_BASE}/activities/${activityId}/zones`,
       {
@@ -257,24 +258,34 @@ export async function fetchActivityZones(
       }
     );
 
+    console.log(`[Zones API] Response status: ${response.status}`);
+
     if (!response.ok) {
+      // Try to get error message
+      const errorText = await response.text();
+      console.log(`[Zones API] Error response: ${errorText}`);
+      
       // 404 = Activity doesn't have HR data
       // 402 = Rate limited or premium required
       // 401/403 = Auth issues
       if (response.status === 404 || response.status === 402 || response.status === 401 || response.status === 403) {
-        console.log(`Zones not available for activity ${activityId} (status: ${response.status})`);
+        console.log(`[Zones API] Zones not available (status: ${response.status})`);
         return null;
       }
       throw new Error(`Strava API error: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log(`[Zones API] Raw response:`, data);
     
     // Find heart rate distribution
     const hrData = data.find((d: any) => d.type === 'heartrate');
     if (!hrData || !hrData.distribution_buckets) {
+      console.log(`[Zones API] No HR distribution found in response`);
       return null;
     }
+
+    console.log(`[Zones API] Found HR data with ${hrData.distribution_buckets.length} buckets`);
 
     // Map to our ZoneDistribution format
     return hrData.distribution_buckets.map((bucket: any, index: number) => ({
@@ -284,7 +295,7 @@ export async function fetchActivityZones(
       time: bucket.time,
     }));
   } catch (error) {
-    console.error('Error fetching activity zones:', error);
+    console.error('[Zones API] Error fetching activity zones:', error);
     return null;
   }
 }
@@ -339,32 +350,44 @@ export async function syncStravaActivities(
   let matched = 0;
   let updated = 0;
 
+  console.log(`[Strava Sync] Found ${activities.length} activities to process`);
+
   for (const activity of activities) {
     const workout = matchActivityToWorkout(activity, workouts);
     
     if (workout) {
       matched++;
+      console.log(`[Strava Sync] Processing activity: ${activity.name} (ID: ${activity.id})`);
+      console.log(`[Strava Sync] - Has HR data: ${activity.average_heartrate ? 'Yes' : 'No'}`);
       
       // Add small delay between API calls to avoid rate limiting
       await delay(200);
       
       // Fetch detailed activity data (includes segment efforts)
+      console.log(`[Strava Sync] - Fetching detailed activity data...`);
       const detailedActivity = await fetchStravaActivityDetail(token, activity.id);
       const activityData = detailedActivity || activity;
+      console.log(`[Strava Sync] - Detail fetch: ${detailedActivity ? 'Success' : 'Failed'}`);
       
       // Add another small delay before zones request
       await delay(200);
       
       // Fetch HR zone distribution for this activity (may fail if rate limited)
+      console.log(`[Strava Sync] - Fetching HR zones...`);
       const zoneDistribution = await fetchActivityZones(token, activity.id);
       if (zoneDistribution) {
         activityData.zone_distribution = zoneDistribution;
+        console.log(`[Strava Sync] - HR Zones: Found ${zoneDistribution.length} zones`);
+        console.log(`[Strava Sync] - Zone data:`, zoneDistribution);
+      } else {
+        console.log(`[Strava Sync] - HR Zones: Not available`);
       }
       
       const miles = Math.round(metersToMiles(activityData.distance) * 100) / 100;
       
       // Only update if not already completed or if mileage is different
       if (!workout.completed || workout.actualMileage !== miles || !workout.stravaActivity) {
+        console.log(`[Strava Sync] - Saving to database with zone_distribution: ${activityData.zone_distribution ? 'Yes' : 'No'}`);
         await onUpdateWorkout(workout.id, {
           actualMileage: miles,
           completed: true,
@@ -374,6 +397,8 @@ export async function syncStravaActivities(
       }
     }
   }
+  
+  console.log(`[Strava Sync] Complete: ${matched} matched, ${updated} updated`);
 
   return { matched, updated };
 }
