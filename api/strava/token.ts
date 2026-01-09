@@ -12,7 +12,6 @@ export default async function handler(
   const { code } = req.body;
   const clientId = process.env.VITE_STRAVA_CLIENT_ID;
   const clientSecret = process.env.STRAVA_CLIENT_SECRET; // Note: Use different env var name for server
-  const redirectUri = process.env.VITE_STRAVA_REDIRECT_URI;
 
   if (!code || !clientId || !clientSecret) {
     return res.status(400).json({ error: 'Missing required parameters' });
