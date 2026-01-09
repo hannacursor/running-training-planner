@@ -50,9 +50,12 @@ export function initiateStravaAuth(): void {
     return;
   }
 
+  // Use window.location.origin as redirect URI (must match Strava callback domain)
+  const redirectUri = window.location.origin;
   const scope = 'activity:read,activity:read_all';
-  const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&redirect_uri=${encodeURIComponent(STRAVA_REDIRECT_URI)}&response_type=code&scope=${scope}&approval_prompt=force`;
+  const authUrl = `https://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&approval_prompt=force`;
 
+  console.log('Strava OAuth redirect URI:', redirectUri);
   window.location.href = authUrl;
 }
 
