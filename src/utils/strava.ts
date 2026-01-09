@@ -385,8 +385,21 @@ export async function syncStravaActivities(
       
       const miles = Math.round(metersToMiles(activityData.distance) * 100) / 100;
       
-      // Only update if not already completed or if mileage is different
-      if (!workout.completed || workout.actualMileage !== miles || !workout.stravaActivity) {
+      // Check if we need to update:
+      // - Workout not completed, OR
+      // - Mileage is different, OR
+      // - No stravaActivity saved yet, OR
+      // - stravaActivity exists but missing zone_distribution (from older sync)
+      const needsUpdate = !workout.completed || 
+        workout.actualMileage !== miles || 
+        !workout.stravaActivity ||
+        (workout.stravaActivity && !workout.stravaActivity.zone_distribution && activityData.zone_distribution);
+      
+      console.log(`[Strava Sync] - Needs update: ${needsUpdate}`);
+      console.log(`[Strava Sync] - Existing zone_distribution: ${workout.stravaActivity?.zone_distribution ? 'Yes' : 'No'}`);
+      console.log(`[Strava Sync] - New zone_distribution: ${activityData.zone_distribution ? 'Yes' : 'No'}`);
+      
+      if (needsUpdate) {
         console.log(`[Strava Sync] - Saving to database with zone_distribution: ${activityData.zone_distribution ? 'Yes' : 'No'}`);
         await onUpdateWorkout(workout.id, {
           actualMileage: miles,
@@ -394,6 +407,8 @@ export async function syncStravaActivities(
           stravaActivity: activityData,
         });
         updated++;
+      } else {
+        console.log(`[Strava Sync] - Skipping (already up to date)`);
       }
     }
   }
