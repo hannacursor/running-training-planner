@@ -148,7 +148,7 @@ export async function getValidAccessToken(): Promise<string | null> {
 }
 
 /**
- * Fetch athlete activities from Strava
+ * Fetch athlete activities from Strava (list endpoint - basic data)
  */
 export async function fetchStravaActivities(
   accessToken: string,
@@ -183,6 +183,34 @@ export async function fetchStravaActivities(
   } catch (error) {
     console.error('Error fetching Strava activities:', error);
     return [];
+  }
+}
+
+/**
+ * Fetch detailed activity data (includes segment efforts)
+ */
+export async function fetchStravaActivityDetail(
+  accessToken: string,
+  activityId: number
+): Promise<StravaActivity | null> {
+  try {
+    const response = await fetch(
+      `${STRAVA_API_BASE}/activities/${activityId}?include_all_efforts=true`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Strava API error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching Strava activity detail:', error);
+    return null;
   }
 }
 
@@ -234,13 +262,19 @@ export async function syncStravaActivities(
     
     if (workout) {
       matched++;
-      const miles = metersToMiles(activity.distance);
+      
+      // Fetch detailed activity data (includes segment efforts)
+      const detailedActivity = await fetchStravaActivityDetail(token, activity.id);
+      const activityData = detailedActivity || activity;
+      
+      const miles = Math.round(metersToMiles(activityData.distance) * 100) / 100;
       
       // Only update if not already completed or if mileage is different
-      if (!workout.completed || workout.actualMileage !== miles) {
+      if (!workout.completed || workout.actualMileage !== miles || !workout.stravaActivity) {
         await onUpdateWorkout(workout.id, {
           actualMileage: miles,
           completed: true,
+          stravaActivity: activityData,
         });
         updated++;
       }
@@ -248,5 +282,31 @@ export async function syncStravaActivities(
   }
 
   return { matched, updated };
+}
+
+/**
+ * Convert seconds to pace string (min:sec per mile)
+ */
+export function secondsToPace(seconds: number, meters: number): string {
+  if (meters === 0) return '--:--';
+  const miles = metersToMiles(meters);
+  const paceSeconds = seconds / miles;
+  const minutes = Math.floor(paceSeconds / 60);
+  const secs = Math.round(paceSeconds % 60);
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Format duration from seconds to HH:MM:SS or MM:SS
+ */
+export function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 

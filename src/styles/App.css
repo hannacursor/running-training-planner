@@ -356,6 +356,32 @@ body {
   margin: 0;
 }
 
+.pace-value {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.strava-detail-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  justify-content: center;
+}
+
+.strava-detail-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
 .workout-card-footer {
   padding-top: 8px;
   border-top: 1px solid;

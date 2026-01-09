@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import { Workout } from '../types';
+import { secondsToPace } from '../utils/strava';
+import { ActivityDetailModal } from './ActivityDetailModal';
 
 interface WorkoutCardProps {
   workout: Workout;
@@ -9,9 +12,21 @@ interface WorkoutCardProps {
 }
 
 export function WorkoutCard({ workout, onUpdate, onDelete, onEdit, canEdit }: WorkoutCardProps) {
+  const [showActivityDetail, setShowActivityDetail] = useState(false);
+
   const handleCompleteToggle = async (e: React.ChangeEvent<HTMLInputElement>) => {
     await onUpdate(workout.id, { completed: e.target.checked });
   };
+
+  // Calculate pace from Strava activity if available
+  const getPace = () => {
+    if (workout.stravaActivity) {
+      return secondsToPace(workout.stravaActivity.moving_time, workout.stravaActivity.distance);
+    }
+    return null;
+  };
+
+  const pace = getPace();
 
   const getWorkoutTypeColorScheme = (type: string) => {
     switch (type) {
@@ -102,9 +117,30 @@ export function WorkoutCard({ workout, onUpdate, onDelete, onEdit, canEdit }: Wo
         <div className="workout-mileage">
           <span className="mileage-label" style={{ color: colorScheme.label }}>Actual:</span>
           <span className="mileage-value" style={{ color: colorScheme.text }}>
-            {workout.actualMileage !== undefined ? workout.actualMileage : '0'} mi
+            {workout.actualMileage !== undefined ? workout.actualMileage.toFixed(2) : '0'} mi
           </span>
+          {pace && (
+            <span className="pace-value" style={{ color: colorScheme.label, marginLeft: '8px' }}>
+              ({pace} /mi)
+            </span>
+          )}
         </div>
+
+        {workout.stravaActivity && (
+          <button
+            className="strava-detail-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowActivityDetail(true);
+            }}
+            style={{ 
+              backgroundColor: colorScheme.borderLeft,
+              color: 'white'
+            }}
+          >
+            📊 View Details
+          </button>
+        )}
 
         {workout.details && (
           <div className="workout-details" style={{ borderTopColor: colorScheme.borderLeft }}>
@@ -126,6 +162,13 @@ export function WorkoutCard({ workout, onUpdate, onDelete, onEdit, canEdit }: Wo
             <span>Completed</span>
           </label>
         </div>
+      )}
+
+      {showActivityDetail && workout.stravaActivity && (
+        <ActivityDetailModal
+          activity={workout.stravaActivity}
+          onClose={() => setShowActivityDetail(false)}
+        />
       )}
     </div>
   );
