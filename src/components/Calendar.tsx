@@ -100,6 +100,11 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
                           <div 
                             key={workout.id}
                             onClick={canEdit && editingWorkoutId !== workout.id ? (e) => {
+                              // Don't trigger edit if clicking on a button or interactive element
+                              const target = e.target as HTMLElement;
+                              if (target.closest('button') || target.closest('input') || target.closest('label')) {
+                                return;
+                              }
                               e.stopPropagation();
                               handleWorkoutEdit(workout);
                             } : undefined}

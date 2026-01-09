@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { StravaActivity } from '../types';
 import { secondsToPace, formatDuration } from '../utils/strava';
 import './ActivityDetailModal.css';
@@ -98,7 +99,9 @@ export function ActivityDetailModal({ activity, onClose }: ActivityDetailModalPr
   const coordinates = polyline ? decodePolyline(polyline) : [];
   const svgPath = coordinatesToSvgPath(coordinates, 400, 250);
 
-  return (
+  // Use portal to render modal at document body level
+  // This prevents parent component re-renders from affecting the modal
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="activity-detail-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -259,7 +262,8 @@ export function ActivityDetailModal({ activity, onClose }: ActivityDetailModalPr
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
