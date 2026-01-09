@@ -51,11 +51,6 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
     setAddingToDate(null);
   };
 
-  const handleUpdateWorkout = async (workoutId: string, updates: Omit<Workout, 'id'>) => {
-    await onUpdateWorkout(workoutId, updates);
-    setEditingWorkoutId(null);
-  };
-
   const handleCancel = () => {
     setAddingToDate(null);
     setEditingWorkoutId(null);
@@ -102,23 +97,23 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
                       
                       <div className="day-workouts">
                         {dayWorkouts.map((workout) => (
-                          <div key={workout.id}>
-                            {editingWorkoutId === workout.id ? (
-                              <InlineWorkoutForm
-                                workout={workout}
-                                defaultDate={workout.date}
-                                onSave={(updates) => handleUpdateWorkout(workout.id, updates)}
-                                onCancel={handleCancel}
-                              />
-                            ) : (
-                              <WorkoutCard
-                                workout={workout}
-                                onUpdate={onUpdateWorkout}
-                                onDelete={onDeleteWorkout}
-                                onEdit={() => handleWorkoutEdit(workout)}
-                                canEdit={canEdit}
-                              />
-                            )}
+                          <div 
+                            key={workout.id}
+                            onClick={canEdit && editingWorkoutId !== workout.id ? (e) => {
+                              e.stopPropagation();
+                              handleWorkoutEdit(workout);
+                            } : undefined}
+                            style={{ cursor: canEdit && editingWorkoutId !== workout.id ? 'pointer' : 'default' }}
+                          >
+                            <WorkoutCard
+                              workout={workout}
+                              onUpdate={onUpdateWorkout}
+                              onDelete={onDeleteWorkout}
+                              onEdit={() => handleWorkoutEdit(workout)}
+                              canEdit={canEdit}
+                              isEditing={editingWorkoutId === workout.id}
+                              onCancelEdit={handleCancel}
+                            />
                           </div>
                         ))}
                         

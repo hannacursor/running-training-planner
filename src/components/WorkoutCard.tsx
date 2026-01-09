@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Workout } from '../types';
+import { Workout, WorkoutType } from '../types';
 import { secondsToPace } from '../utils/strava';
 import { ActivityDetailModal } from './ActivityDetailModal';
 
@@ -9,13 +9,48 @@ interface WorkoutCardProps {
   onDelete: (id: string) => Promise<void>;
   onEdit: () => void;
   canEdit: boolean;
+  isEditing?: boolean;
+  onCancelEdit?: () => void;
 }
 
-export function WorkoutCard({ workout, onUpdate, onDelete, onEdit, canEdit }: WorkoutCardProps) {
+const WORKOUT_TYPES: WorkoutType[] = ['Easy Run', 'Threshold', 'Intervals', 'Long Run', 'Rest'];
+
+export function WorkoutCard({ workout, onUpdate, onDelete, canEdit, isEditing, onCancelEdit }: WorkoutCardProps) {
   const [showActivityDetail, setShowActivityDetail] = useState(false);
+  
+  // Editing state
+  const [editWorkoutType, setEditWorkoutType] = useState<WorkoutType>(workout.workoutType);
+  const [editPlannedMileage, setEditPlannedMileage] = useState(workout.plannedMileage.toString());
+  const [editDetails, setEditDetails] = useState(workout.details || '');
 
   const handleCompleteToggle = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
     await onUpdate(workout.id, { completed: e.target.checked });
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const mileage = parseFloat(editPlannedMileage);
+    if (isNaN(mileage) || mileage < 0) return;
+    
+    await onUpdate(workout.id, {
+      workoutType: editWorkoutType,
+      plannedMileage: mileage,
+      details: editDetails.trim() || undefined,
+    });
+    onCancelEdit?.();
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Reset to original values
+    setEditWorkoutType(workout.workoutType);
+    setEditPlannedMileage(workout.plannedMileage.toString());
+    setEditDetails(workout.details || '');
+    onCancelEdit?.();
   };
 
   // Calculate pace from Strava activity if available
@@ -75,8 +110,87 @@ export function WorkoutCard({ workout, onUpdate, onDelete, onEdit, canEdit }: Wo
     }
   };
 
-  const colorScheme = getWorkoutTypeColorScheme(workout.workoutType);
+  // Use editing type for color scheme when editing
+  const colorScheme = getWorkoutTypeColorScheme(isEditing ? editWorkoutType : workout.workoutType);
 
+  // Editing mode - show inline editable fields
+  if (isEditing && canEdit) {
+    return (
+      <div 
+        className="workout-card editing"
+        style={{ 
+          borderLeftColor: colorScheme.borderLeft,
+          backgroundColor: colorScheme.background,
+          color: colorScheme.text,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <form onSubmit={handleSaveEdit}>
+          <div className="workout-card-header">
+            <select
+              value={editWorkoutType}
+              onChange={(e) => setEditWorkoutType(e.target.value as WorkoutType)}
+              className="inline-type-select"
+              style={{ color: colorScheme.text, borderColor: colorScheme.borderLeft }}
+            >
+              {WORKOUT_TYPES.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+            <div className="workout-actions">
+              <button type="button" className="btn-icon" onClick={handleCancelEdit} title="Cancel">
+                ✕
+              </button>
+              <button type="submit" className="btn-icon save-btn" title="Save">
+                ✓
+              </button>
+            </div>
+          </div>
+          
+          <div className="workout-card-body">
+            <div className="workout-mileage">
+              <span className="mileage-label" style={{ color: colorScheme.label }}>Planned:</span>
+              <input
+                type="number"
+                value={editPlannedMileage}
+                onChange={(e) => setEditPlannedMileage(e.target.value)}
+                min="0"
+                step="0.1"
+                className="inline-mileage-input"
+                style={{ color: colorScheme.text, borderColor: colorScheme.borderLeft }}
+              />
+              <span className="mileage-unit" style={{ color: colorScheme.label }}>mi</span>
+            </div>
+            
+            {(workout.actualMileage !== undefined && workout.actualMileage > 0) && (
+              <div className="workout-mileage">
+                <span className="mileage-label" style={{ color: colorScheme.label }}>Actual:</span>
+                <span className="mileage-value" style={{ color: colorScheme.text }}>
+                  {workout.actualMileage.toFixed(2)} mi
+                </span>
+                {pace && (
+                  <span className="pace-value" style={{ color: colorScheme.label, marginLeft: '8px' }}>
+                    ({pace} /mi)
+                  </span>
+                )}
+              </div>
+            )}
+
+            <textarea
+              value={editDetails}
+              onChange={(e) => setEditDetails(e.target.value)}
+              className="inline-details-textarea"
+              placeholder="Notes..."
+              rows={2}
+              style={{ borderColor: colorScheme.borderLeft }}
+            />
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  // View mode - normal display
   return (
     <div 
       className={`workout-card ${workout.completed ? 'completed' : ''}`}
@@ -90,9 +204,6 @@ export function WorkoutCard({ workout, onUpdate, onDelete, onEdit, canEdit }: Wo
         <div className="workout-type" style={{ color: colorScheme.text }}>{workout.workoutType}</div>
         {canEdit && (
           <div className="workout-actions">
-            <button className="btn-icon" onClick={onEdit} title="Edit" style={{ color: colorScheme.text }}>
-              ✏️
-            </button>
             <button 
               className="btn-icon" 
               onClick={async (e) => {
@@ -114,23 +225,27 @@ export function WorkoutCard({ workout, onUpdate, onDelete, onEdit, canEdit }: Wo
           <span className="mileage-value" style={{ color: colorScheme.text }}>{workout.plannedMileage} mi</span>
         </div>
         
-        <div className="workout-mileage">
-          <span className="mileage-label" style={{ color: colorScheme.label }}>Actual:</span>
-          <span className="mileage-value" style={{ color: colorScheme.text }}>
-            {workout.actualMileage !== undefined ? workout.actualMileage.toFixed(2) : '0'} mi
-          </span>
-          {pace && (
-            <span className="pace-value" style={{ color: colorScheme.label, marginLeft: '8px' }}>
-              ({pace} /mi)
+        {(workout.actualMileage !== undefined && workout.actualMileage > 0) && (
+          <div className="workout-mileage">
+            <span className="mileage-label" style={{ color: colorScheme.label }}>Actual:</span>
+            <span className="mileage-value" style={{ color: colorScheme.text }}>
+              {workout.actualMileage.toFixed(2)} mi
             </span>
-          )}
-        </div>
+            {pace && (
+              <span className="pace-value" style={{ color: colorScheme.label, marginLeft: '8px' }}>
+                ({pace} /mi)
+              </span>
+            )}
+          </div>
+        )}
 
         {workout.stravaActivity && (
           <button
+            type="button"
             className="strava-detail-btn"
             onClick={(e) => {
               e.stopPropagation();
+              e.preventDefault();
               setShowActivityDetail(true);
             }}
             style={{ 
@@ -144,7 +259,7 @@ export function WorkoutCard({ workout, onUpdate, onDelete, onEdit, canEdit }: Wo
 
         {workout.details && (
           <div className="workout-details" style={{ borderTopColor: colorScheme.borderLeft }}>
-            <span className="details-label" style={{ color: colorScheme.label }}>Details:</span>
+            <span className="details-label" style={{ color: colorScheme.label }}>Notes:</span>
             <p className="details-text" style={{ color: colorScheme.text }}>{workout.details}</p>
           </div>
         )}

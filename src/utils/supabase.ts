@@ -51,6 +51,7 @@ export async function loadWorkoutsFromSupabase(): Promise<Workout[]> {
       workoutType: row.workout_type as Workout['workoutType'],
       completed: row.completed || false,
       details: row.details || undefined,
+      stravaActivity: row.strava_activity ? JSON.parse(row.strava_activity) : undefined,
     }));
   } catch (error) {
     console.error('Error loading workouts from Supabase:', error);
@@ -77,6 +78,7 @@ export async function saveWorkoutToSupabase(workout: Workout): Promise<boolean> 
         workout_type: workout.workoutType,
         completed: workout.completed,
         details: workout.details || null,
+        strava_activity: workout.stravaActivity ? JSON.stringify(workout.stravaActivity) : null,
       }, {
         onConflict: 'id'
       });

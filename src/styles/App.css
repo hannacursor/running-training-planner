@@ -494,6 +494,72 @@ body {
   font-weight: 500;
 }
 
+/* Inline editing within workout card */
+.workout-card.editing {
+  border: 2px solid;
+}
+
+.inline-type-select {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+}
+
+.inline-type-select:focus {
+  outline: none;
+}
+
+.inline-mileage-input {
+  width: 50px;
+  padding: 4px 6px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.8);
+  text-align: right;
+}
+
+.inline-mileage-input:focus {
+  outline: none;
+}
+
+.mileage-unit {
+  font-size: 0.85rem;
+  margin-left: 4px;
+}
+
+.inline-details-textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.8);
+  color: #333;
+  resize: none;
+  font-family: inherit;
+  margin-top: 8px;
+}
+
+.inline-details-textarea:focus {
+  outline: none;
+}
+
+.inline-details-textarea::placeholder {
+  color: #999;
+}
+
+.workout-card .save-btn {
+  color: #4CAF50 !important;
+  font-weight: bold;
+}
+
 .strava-detail-btn {
   margin-top: 8px;
   padding: 6px 12px;

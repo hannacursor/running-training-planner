@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Workout, WorkoutType } from '../types';
 
 interface InlineWorkoutFormProps {
-  workout?: Workout;
   defaultDate: string;
   onSave: (workout: Omit<Workout, 'id'>) => void;
   onCancel: () => void;
@@ -10,21 +9,11 @@ interface InlineWorkoutFormProps {
 
 const WORKOUT_TYPES: WorkoutType[] = ['Easy Run', 'Threshold', 'Intervals', 'Long Run', 'Rest'];
 
-export function InlineWorkoutForm({ workout, defaultDate, onSave, onCancel }: InlineWorkoutFormProps) {
-  const [workoutType, setWorkoutType] = useState<WorkoutType>(workout?.workoutType || 'Easy Run');
-  const [plannedMileage, setPlannedMileage] = useState(workout?.plannedMileage.toString() || '0');
-  const [actualMileage, setActualMileage] = useState(workout?.actualMileage?.toString() || '');
-  const [details, setDetails] = useState(workout?.details || '');
+export function InlineWorkoutForm({ defaultDate, onSave, onCancel }: InlineWorkoutFormProps) {
+  const [workoutType, setWorkoutType] = useState<WorkoutType>('Easy Run');
+  const [plannedMileage, setPlannedMileage] = useState('0');
+  const [details, setDetails] = useState('');
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (workout) {
-      setWorkoutType(workout.workoutType);
-      setPlannedMileage(workout.plannedMileage.toString());
-      setActualMileage(workout.actualMileage?.toString() || '');
-      setDetails(workout.details || '');
-    }
-  }, [workout]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,19 +29,13 @@ export function InlineWorkoutForm({ workout, defaultDate, onSave, onCancel }: In
       setError('Rest days should be 0 miles');
       return;
     }
-
-    const actualMileageNum = actualMileage && actualMileage.trim() !== '' 
-      ? parseFloat(actualMileage) 
-      : undefined;
     
     onSave({
-      date: workout?.date || defaultDate,
+      date: defaultDate,
       workoutType,
       plannedMileage: mileage,
-      completed: workout?.completed || false,
-      actualMileage: actualMileageNum,
+      completed: false,
       details: details.trim() || undefined,
-      stravaActivity: workout?.stravaActivity,
     });
   };
 
@@ -83,20 +66,6 @@ export function InlineWorkoutForm({ workout, defaultDate, onSave, onCancel }: In
             type="number"
             value={plannedMileage}
             onChange={(e) => setPlannedMileage(e.target.value)}
-            min="0"
-            step="0.1"
-            className="inline-input"
-            placeholder="0"
-          />
-          <span className="inline-unit">mi</span>
-        </div>
-
-        <div className="inline-form-row">
-          <label className="inline-label">Actual</label>
-          <input
-            type="number"
-            value={actualMileage}
-            onChange={(e) => setActualMileage(e.target.value)}
             min="0"
             step="0.1"
             className="inline-input"
