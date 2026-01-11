@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Workout } from '../types';
 import { getTrainingWeeks, getWeekDays, toISODate, isInTrainingRange, isSameDate } from '../utils/dateUtils';
 import { WorkoutCard } from './WorkoutCard';
 import { InlineWorkoutForm } from './InlineWorkoutForm';
 import { WeekSummary } from './WeekSummary';
 import { formatDayName, formatDayNumber } from '../utils/dateUtils';
+import { endOfWeek, startOfDay } from 'date-fns';
 
 interface CalendarProps {
   workouts: Workout[];
@@ -19,9 +20,40 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
   const [addingToDate, setAddingToDate] = useState<string | null>(null);
   // Track which workout is being edited inline
   const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
+  // Track which weeks are manually expanded (overrides auto-collapse)
+  const [expandedWeeks, setExpandedWeeks] = useState<Set<number>>(new Set());
 
   const weeks = getTrainingWeeks();
-  const today = new Date();
+  const today = startOfDay(new Date());
+
+  // Determine which weeks are "completed" (all days in the past)
+  const isWeekCompleted = useMemo(() => {
+    return weeks.map((weekStart) => {
+      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+      return startOfDay(weekEnd) < today;
+    });
+  }, [weeks, today]);
+
+  const toggleWeekExpanded = (weekIndex: number) => {
+    setExpandedWeeks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(weekIndex)) {
+        newSet.delete(weekIndex);
+      } else {
+        newSet.add(weekIndex);
+      }
+      return newSet;
+    });
+  };
+
+  const isWeekExpanded = (weekIndex: number): boolean => {
+    // If manually toggled, use that state
+    if (expandedWeeks.has(weekIndex)) {
+      return true; // Manually expanded
+    }
+    // Otherwise, auto-collapse completed weeks
+    return !isWeekCompleted[weekIndex];
+  };
 
   const handleDayClick = (date: Date) => {
     if (!isInTrainingRange(date) || !canEdit) return;
@@ -69,13 +101,27 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
     <div className="calendar-container">
       {weeks.map((weekStart, weekIndex) => {
         const weekDays = getWeekDays(weekStart);
+        const expanded = isWeekExpanded(weekIndex);
+        const completed = isWeekCompleted[weekIndex];
         
         return (
-          <div key={weekStart.toISOString()} className="week-section">
-            <WeekSummary weekStart={weekStart} workouts={workouts} weekNumber={weekIndex + 1} />
+          <div key={weekStart.toISOString()} className={`week-section ${!expanded ? 'collapsed' : ''}`}>
+            <div 
+              className={`week-header-clickable ${completed ? 'completed-week' : ''}`}
+              onClick={() => completed && toggleWeekExpanded(weekIndex)}
+              style={{ cursor: completed ? 'pointer' : 'default' }}
+            >
+              <WeekSummary weekStart={weekStart} workouts={workouts} weekNumber={weekIndex + 1} />
+              {completed && (
+                <div className="week-expand-indicator">
+                  {expanded ? '▼' : '▶'} {expanded ? 'Click to collapse' : 'Click to expand'}
+                </div>
+              )}
+            </div>
             
-            <div className="calendar-week">
-              <div className="calendar-grid">
+            {expanded && (
+              <div className="calendar-week">
+                <div className="calendar-grid">
                 {weekDays.map((day) => {
                   const dayWorkouts = getWorkoutsForDate(day);
                   const isInRange = isInTrainingRange(day);
@@ -143,6 +189,7 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
                 })}
               </div>
             </div>
+            )}
           </div>
         );
       })}
