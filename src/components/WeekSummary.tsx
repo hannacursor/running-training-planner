@@ -109,6 +109,22 @@ export function WeekSummary({
     <div className="week-summary">
       <div className="week-summary-header">
         <h3>Week of {formatDate(weekStart)} - Week {weekNumber} of 16</h3>
+      </div>
+      <div className="week-summary-main">
+        <div className="week-summary-stats">
+          <div className="stat">
+            <span className="stat-label">Planned:</span>
+            <span className="stat-value">{summary.plannedMiles} mi</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Completed:</span>
+            <span className="stat-value">{summary.completedMiles} mi</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Progress:</span>
+            <span className="stat-value">{summary.progress}%</span>
+          </div>
+        </div>
         <textarea
           ref={noteInputRef}
           className="week-note-input"
@@ -120,20 +136,6 @@ export function WeekSummary({
           aria-label={`Week ${weekNumber} note`}
           disabled={!canEdit}
         />
-      </div>
-      <div className="week-summary-stats">
-        <div className="stat">
-          <span className="stat-label">Planned:</span>
-          <span className="stat-value">{summary.plannedMiles} mi</span>
-        </div>
-        <div className="stat">
-          <span className="stat-label">Completed:</span>
-          <span className="stat-value">{summary.completedMiles} mi</span>
-        </div>
-        <div className="stat">
-          <span className="stat-label">Progress:</span>
-          <span className="stat-value">{summary.progress}%</span>
-        </div>
       </div>
 
       {/* Weekly HR Zone Distribution - always visible when data exists */}
