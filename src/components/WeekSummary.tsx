@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Workout, ZoneDistribution } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import { parseISO, startOfWeek, endOfWeek, startOfDay } from 'date-fns';
@@ -11,6 +11,9 @@ interface WeekSummaryProps {
   weekStart: Date;
   workouts: Workout[];
   weekNumber: number;
+  weekNote: string;
+  onWeekNoteSave: (note: string) => void;
+  canEdit: boolean;
 }
 
 function formatZoneTime(seconds: number): string {
@@ -22,7 +25,19 @@ function formatZoneTime(seconds: number): string {
   return `${minutes}m`;
 }
 
-export function WeekSummary({ weekStart, workouts, weekNumber }: WeekSummaryProps) {
+export function WeekSummary({
+  weekStart,
+  workouts,
+  weekNumber,
+  weekNote,
+  onWeekNoteSave,
+  canEdit,
+}: WeekSummaryProps) {
+  const [noteDraft, setNoteDraft] = useState(weekNote);
+
+  useEffect(() => {
+    setNoteDraft(weekNote);
+  }, [weekNote]);
 
   const summary = useMemo(() => {
     // Ensure weekStart is normalized to Monday at start of day
@@ -73,6 +88,17 @@ export function WeekSummary({ weekStart, workouts, weekNumber }: WeekSummaryProp
     <div className="week-summary">
       <div className="week-summary-header">
         <h3>Week of {formatDate(weekStart)} - Week {weekNumber} of 16</h3>
+        <input
+          type="text"
+          className="week-note-input"
+          value={noteDraft}
+          onChange={(e) => setNoteDraft(e.target.value)}
+          onBlur={() => onWeekNoteSave(noteDraft)}
+          onClick={(e) => e.stopPropagation()}
+          placeholder="Add note..."
+          aria-label={`Week ${weekNumber} note`}
+          disabled={!canEdit}
+        />
       </div>
       <div className="week-summary-stats">
         <div className="stat">

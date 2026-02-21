@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Workout } from '../types';
 import { getTrainingWeeks, getWeekDays, toISODate, isInTrainingRange, isSameDate } from '../utils/dateUtils';
 import { WorkoutCard } from './WorkoutCard';
@@ -6,6 +6,12 @@ import { InlineWorkoutForm } from './InlineWorkoutForm';
 import { WeekSummary } from './WeekSummary';
 import { formatDayName, formatDayNumber } from '../utils/dateUtils';
 import { endOfWeek, startOfDay } from 'date-fns';
+import {
+  deleteWeekNoteFromSupabase,
+  loadWeekNotesFromSupabase,
+  saveWeekNoteToSupabase,
+  supabase,
+} from '../utils/supabase';
 
 interface CalendarProps {
   workouts: Workout[];
@@ -22,9 +28,25 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
   const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
   // Track which weeks are manually expanded (overrides auto-collapse)
   const [expandedWeeks, setExpandedWeeks] = useState<Set<number>>(new Set());
+  // Track freeform notes per week, keyed by week start ISO date.
+  const [weekNotes, setWeekNotes] = useState<Record<string, string>>({});
 
   const weeks = getTrainingWeeks();
   const today = startOfDay(new Date());
+
+  useEffect(() => {
+    const loadWeekNotes = async () => {
+      if (!supabase) {
+        console.warn('Supabase is not configured. Week notes will not persist.');
+        return;
+      }
+
+      const loadedNotes = await loadWeekNotesFromSupabase();
+      setWeekNotes(loadedNotes);
+    };
+
+    loadWeekNotes();
+  }, []);
 
   // Determine which weeks are "completed" (all days in the past)
   const isWeekCompleted = useMemo(() => {
@@ -97,12 +119,44 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
     return isSameDate(date, today);
   };
 
+  const handleWeekNoteSave = async (weekStartIso: string, note: string) => {
+    const normalizedNote = note.trim();
+
+    setWeekNotes((prev) => {
+      const next = { ...prev };
+      if (normalizedNote.length === 0) {
+        delete next[weekStartIso];
+      } else {
+        next[weekStartIso] = note;
+      }
+      return next;
+    });
+
+    if (!supabase) {
+      return;
+    }
+
+    if (normalizedNote.length === 0) {
+      const success = await deleteWeekNoteFromSupabase(weekStartIso);
+      if (!success) {
+        console.error('Failed to delete week note in Supabase:', weekStartIso);
+      }
+      return;
+    }
+
+    const success = await saveWeekNoteToSupabase(weekStartIso, note);
+    if (!success) {
+      console.error('Failed to save week note to Supabase:', weekStartIso);
+    }
+  };
+
   return (
     <div className="calendar-container">
       {weeks.map((weekStart, weekIndex) => {
         const weekDays = getWeekDays(weekStart);
         const expanded = isWeekExpanded(weekIndex);
         const completed = isWeekCompleted[weekIndex];
+        const weekStartIso = toISODate(weekStart);
         
         return (
           <div key={weekStart.toISOString()} className={`week-section ${!expanded ? 'collapsed' : ''}`}>
@@ -111,7 +165,14 @@ export function Calendar({ workouts, onUpdateWorkout, onDeleteWorkout, onAddWork
               onClick={() => completed && toggleWeekExpanded(weekIndex)}
               style={{ cursor: completed ? 'pointer' : 'default' }}
             >
-              <WeekSummary weekStart={weekStart} workouts={workouts} weekNumber={weekIndex + 1} />
+              <WeekSummary
+                weekStart={weekStart}
+                workouts={workouts}
+                weekNumber={weekIndex + 1}
+                weekNote={weekNotes[weekStartIso] || ''}
+                onWeekNoteSave={(note) => handleWeekNoteSave(weekStartIso, note)}
+                canEdit={canEdit}
+              />
               {completed && (
                 <div className="week-expand-indicator">
                   {expanded ? '▼' : '▶'} {expanded ? 'Click to collapse' : 'Click to expand'}

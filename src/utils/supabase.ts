@@ -22,6 +22,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 // Database table name
 const TABLE_NAME = 'workouts';
+const WEEK_NOTES_TABLE_NAME = 'week_notes';
 
 /**
  * Load workouts from Supabase
@@ -119,6 +120,96 @@ export async function deleteWorkoutFromSupabase(id: string): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('Error deleting workout from Supabase:', error);
+    return false;
+  }
+}
+
+/**
+ * Load week notes from Supabase.
+ * Returns an object keyed by week_start (ISO Monday date).
+ */
+export async function loadWeekNotesFromSupabase(): Promise<Record<string, string>> {
+  if (!supabase) {
+    return {};
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from(WEEK_NOTES_TABLE_NAME)
+      .select('week_start, note');
+
+    if (error) {
+      console.error('Error loading week notes from Supabase:', error);
+      return {};
+    }
+
+    return (data || []).reduce<Record<string, string>>((acc, row: any) => {
+      if (row.week_start && typeof row.note === 'string') {
+        acc[row.week_start] = row.note;
+      }
+      return acc;
+    }, {});
+  } catch (error) {
+    console.error('Error loading week notes from Supabase:', error);
+    return {};
+  }
+}
+
+/**
+ * Save (upsert) a week note in Supabase.
+ */
+export async function saveWeekNoteToSupabase(weekStart: string, note: string): Promise<boolean> {
+  if (!supabase) {
+    return false;
+  }
+
+  try {
+    const { error } = await supabase
+      .from(WEEK_NOTES_TABLE_NAME)
+      .upsert(
+        {
+          week_start: weekStart,
+          note,
+        },
+        {
+          onConflict: 'week_start',
+        }
+      );
+
+    if (error) {
+      console.error('Error saving week note to Supabase:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error saving week note to Supabase:', error);
+    return false;
+  }
+}
+
+/**
+ * Delete a week note from Supabase.
+ */
+export async function deleteWeekNoteFromSupabase(weekStart: string): Promise<boolean> {
+  if (!supabase) {
+    return false;
+  }
+
+  try {
+    const { error } = await supabase
+      .from(WEEK_NOTES_TABLE_NAME)
+      .delete()
+      .eq('week_start', weekStart);
+
+    if (error) {
+      console.error('Error deleting week note from Supabase:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting week note from Supabase:', error);
     return false;
   }
 }
