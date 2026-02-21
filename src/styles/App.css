@@ -107,29 +107,31 @@ body {
   border-radius: 6px;
 }
 
-.week-summary-header {
+.week-summary-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 10px;
 }
 
-.week-summary-header h3 {
+.week-summary-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+}
+
+.week-summary-left h3 {
   font-size: 1.2rem;
   color: #1565c0;
   margin: 0;
-}
-
-.week-summary-main {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
 }
 
 .week-note-input {
   width: 46%;
   max-width: 46%;
   flex: 0 0 46%;
-  margin-left: auto;
   height: 112px;
   min-height: 112px;
   padding: 6px 10px;
@@ -161,9 +163,8 @@ body {
 .week-summary-stats {
   display: flex;
   gap: 18px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: flex-start;
-  flex: 1 1 auto;
 }
 
 .stat {
@@ -732,13 +733,12 @@ body {
 }
 
 .week-expand-indicator {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;
+  margin-top: 8px;
   font-size: 0.8rem;
   color: #64b5f6;
   display: flex;
+  justify-content: flex-end;
   align-items: center;
   gap: 6px;
 }
@@ -989,11 +989,8 @@ body {
     min-height: auto;
   }
 
-  .week-summary-header {
+  .week-summary-top {
     margin-bottom: 8px;
-  }
-
-  .week-summary-main {
     flex-direction: column;
     align-items: stretch;
   }

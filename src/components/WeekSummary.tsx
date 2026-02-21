@@ -107,22 +107,22 @@ export function WeekSummary({
 
   return (
     <div className="week-summary">
-      <div className="week-summary-header">
-        <h3>Week of {formatDate(weekStart)} - Week {weekNumber} of 16</h3>
-      </div>
-      <div className="week-summary-main">
-        <div className="week-summary-stats">
-          <div className="stat">
-            <span className="stat-label">Planned:</span>
-            <span className="stat-value">{summary.plannedMiles} mi</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Completed:</span>
-            <span className="stat-value">{summary.completedMiles} mi</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Progress:</span>
-            <span className="stat-value">{summary.progress}%</span>
+      <div className="week-summary-top">
+        <div className="week-summary-left">
+          <h3>Week of {formatDate(weekStart)} - Week {weekNumber} of 16</h3>
+          <div className="week-summary-stats">
+            <div className="stat">
+              <span className="stat-label">Planned:</span>
+              <span className="stat-value">{summary.plannedMiles} mi</span>
+            </div>
+            <div className="stat">
+              <span className="stat-label">Completed:</span>
+              <span className="stat-value">{summary.completedMiles} mi</span>
+            </div>
+            <div className="stat">
+              <span className="stat-label">Progress:</span>
+              <span className="stat-value">{summary.progress}%</span>
+            </div>
           </div>
         </div>
         <textarea
