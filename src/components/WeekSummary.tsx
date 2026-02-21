@@ -88,8 +88,7 @@ export function WeekSummary({
     <div className="week-summary">
       <div className="week-summary-header">
         <h3>Week of {formatDate(weekStart)} - Week {weekNumber} of 16</h3>
-        <input
-          type="text"
+        <textarea
           className="week-note-input"
           value={noteDraft}
           onChange={(e) => setNoteDraft(e.target.value)}
