@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Workout, ZoneDistribution } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import { parseISO, startOfWeek, endOfWeek, startOfDay } from 'date-fns';
@@ -34,10 +34,31 @@ export function WeekSummary({
   canEdit,
 }: WeekSummaryProps) {
   const [noteDraft, setNoteDraft] = useState(weekNote);
+  const noteInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     setNoteDraft(weekNote);
   }, [weekNote]);
+
+  useLayoutEffect(() => {
+    const textarea = noteInputRef.current;
+    if (!textarea) return;
+
+    const maxFontSizePx = 14;
+    const minFontSizePx = 9;
+    const stepPx = 0.5;
+
+    let currentFontSize = maxFontSizePx;
+    textarea.style.fontSize = `${currentFontSize}px`;
+
+    while (
+      (textarea.scrollHeight > textarea.clientHeight || textarea.scrollWidth > textarea.clientWidth) &&
+      currentFontSize > minFontSizePx
+    ) {
+      currentFontSize -= stepPx;
+      textarea.style.fontSize = `${currentFontSize}px`;
+    }
+  }, [noteDraft]);
 
   const summary = useMemo(() => {
     // Ensure weekStart is normalized to Monday at start of day
@@ -89,6 +110,7 @@ export function WeekSummary({
       <div className="week-summary-header">
         <h3>Week of {formatDate(weekStart)} - Week {weekNumber} of 16</h3>
         <textarea
+          ref={noteInputRef}
           className="week-note-input"
           value={noteDraft}
           onChange={(e) => setNoteDraft(e.target.value)}

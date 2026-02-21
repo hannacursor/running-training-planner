@@ -109,7 +109,7 @@ body {
 
 .week-summary-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
@@ -122,19 +122,20 @@ body {
 }
 
 .week-note-input {
-  width: 280px;
-  max-width: 40%;
-  height: 32px;
-  min-height: 32px;
+  width: 50%;
+  max-width: 50%;
+  margin-left: auto;
+  height: 112px;
+  min-height: 112px;
   padding: 6px 10px;
   border: 1px solid #90caf9;
   border-radius: 4px;
   background: #ffffff;
   color: #1565c0;
-  font-size: 0.85rem;
-  line-height: 1.3;
+  font-size: 14px;
+  line-height: 1.2;
   resize: none;
-  overflow-y: auto;
+  overflow: hidden;
   font-family: inherit;
 }
 
