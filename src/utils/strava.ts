@@ -1,5 +1,5 @@
 import { StravaActivity, StravaToken, Workout, ZoneDistribution, AthleteZones } from '../types';
-import { parseISO, isSameDay } from 'date-fns';
+import { parseISO, isSameDay, format } from 'date-fns';
 
 const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID;
 const STRAVA_API_BASE = 'https://www.strava.com/api/v3';
@@ -330,7 +330,39 @@ export function matchActivityToWorkout(
 }
 
 /**
- * Sync Strava activities to workouts
+ * Find workout for a given date (ISO date string YYYY-MM-DD)
+ */
+function findWorkoutForDate(dateStr: string, workouts: Workout[]): Workout | null {
+  return workouts.find(w => w.date === dateStr) || null;
+}
+
+/**
+ * Merge zone distributions from multiple activities (sum time per zone)
+ */
+function mergeZoneDistributions(
+  distributions: (ZoneDistribution[] | undefined)[]
+): ZoneDistribution[] | undefined {
+  const zoneMap = new Map<number, number>();
+  
+  for (const dist of distributions) {
+    if (!dist) continue;
+    for (const z of dist) {
+      if (z.zone >= 1 && z.zone <= 5) {
+        zoneMap.set(z.zone, (zoneMap.get(z.zone) ?? 0) + z.time);
+      }
+    }
+  }
+  
+  if (zoneMap.size === 0) return undefined;
+  
+  return Array.from(zoneMap.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([zone, time]) => ({ zone, min: 0, max: 0, time }));
+}
+
+/**
+ * Sync Strava activities to workouts.
+ * When multiple activities occur on the same day, their mileage is summed.
  */
 export async function syncStravaActivities(
   workouts: Workout[],
@@ -352,68 +384,96 @@ export async function syncStravaActivities(
 
   console.log(`[Strava Sync] Found ${activities.length} activities to process`);
 
+  // Group activities by date (YYYY-MM-DD)
+  const activitiesByDate = new Map<string, StravaActivity[]>();
   for (const activity of activities) {
-    const workout = matchActivityToWorkout(activity, workouts);
-    
-    if (workout) {
-      matched++;
-      console.log(`[Strava Sync] Processing activity: ${activity.name} (ID: ${activity.id})`);
-      console.log(`[Strava Sync] - Has HR data: ${activity.average_heartrate ? 'Yes' : 'No'}`);
-      
-      // Add small delay between API calls to avoid rate limiting
+    const dateStr = format(parseISO(activity.start_date), 'yyyy-MM-dd');
+    const list = activitiesByDate.get(dateStr) ?? [];
+    list.push(activity);
+    activitiesByDate.set(dateStr, list);
+  }
+
+  for (const [dateStr, dayActivities] of activitiesByDate) {
+    const workout = findWorkoutForDate(dateStr, workouts);
+    if (!workout) continue;
+
+    matched += dayActivities.length;
+    console.log(`[Strava Sync] Processing ${dayActivities.length} activit${dayActivities.length === 1 ? 'y' : 'ies'} on ${dateStr}`);
+
+    const detailedActivities: StravaActivity[] = [];
+    let totalDistanceMeters = 0;
+    let totalMovingTimeSeconds = 0;
+    let totalElapsedTimeSeconds = 0;
+    let maxSpeed = 0;
+    let totalElevationGain = 0;
+    let totalCalories = 0;
+    const zoneDistributions: (ZoneDistribution[] | undefined)[] = [];
+
+    for (const activity of dayActivities) {
       await delay(200);
-      
-      // Fetch detailed activity data (includes segment efforts)
-      console.log(`[Strava Sync] - Fetching detailed activity data...`);
       const detailedActivity = await fetchStravaActivityDetail(token, activity.id);
       const activityData = detailedActivity || activity;
-      console.log(`[Strava Sync] - Detail fetch: ${detailedActivity ? 'Success' : 'Failed'}`);
-      
-      // Add another small delay before zones request
+      detailedActivities.push(activityData);
+
+      totalDistanceMeters += activityData.distance;
+      totalMovingTimeSeconds += activityData.moving_time;
+      totalElapsedTimeSeconds += activityData.elapsed_time;
+      maxSpeed = Math.max(maxSpeed, activityData.max_speed ?? 0);
+      totalElevationGain += activityData.total_elevation_gain ?? 0;
+      totalCalories += activityData.calories ?? 0;
+
       await delay(200);
-      
-      // Fetch HR zone distribution for this activity (may fail if rate limited)
-      console.log(`[Strava Sync] - Fetching HR zones...`);
       const zoneDistribution = await fetchActivityZones(token, activity.id);
       if (zoneDistribution) {
         activityData.zone_distribution = zoneDistribution;
-        console.log(`[Strava Sync] - HR Zones: Found ${zoneDistribution.length} zones`);
-        console.log(`[Strava Sync] - Zone data:`, zoneDistribution);
+        zoneDistributions.push(zoneDistribution);
       } else {
-        console.log(`[Strava Sync] - HR Zones: Not available`);
-      }
-      
-      const miles = Math.round(metersToMiles(activityData.distance) * 100) / 100;
-      
-      // Check if we need to update:
-      // - Workout not completed, OR
-      // - Mileage is different, OR
-      // - No stravaActivity saved yet, OR
-      // - stravaActivity exists but missing zone_distribution (from older sync)
-      const needsUpdate = !workout.completed || 
-        workout.actualMileage !== miles || 
-        !workout.stravaActivity ||
-        (workout.stravaActivity && !workout.stravaActivity.zone_distribution && activityData.zone_distribution);
-      
-      console.log(`[Strava Sync] - Needs update: ${needsUpdate}`);
-      console.log(`[Strava Sync] - Existing zone_distribution: ${workout.stravaActivity?.zone_distribution ? 'Yes' : 'No'}`);
-      console.log(`[Strava Sync] - New zone_distribution: ${activityData.zone_distribution ? 'Yes' : 'No'}`);
-      
-      if (needsUpdate) {
-        console.log(`[Strava Sync] - Saving to database with zone_distribution: ${activityData.zone_distribution ? 'Yes' : 'No'}`);
-        await onUpdateWorkout(workout.id, {
-          actualMileage: miles,
-          completed: true,
-          stravaActivity: activityData,
-        });
-        updated++;
-      } else {
-        console.log(`[Strava Sync] - Skipping (already up to date)`);
+        zoneDistributions.push(activityData.zone_distribution);
       }
     }
+
+    const totalMiles = Math.round(metersToMiles(totalDistanceMeters) * 100) / 100;
+    const mergedZoneDistribution = mergeZoneDistributions(zoneDistributions);
+
+    // Use longest activity as base for display, with merged totals
+    const primaryActivity = detailedActivities.reduce((a, b) =>
+      a.distance >= b.distance ? a : b
+    );
+    const mergedActivity: StravaActivity = {
+      ...primaryActivity,
+      id: primaryActivity.id,
+      name: dayActivities.length > 1
+        ? `${primaryActivity.name} (+${dayActivities.length - 1} more)`
+        : primaryActivity.name,
+      distance: totalDistanceMeters,
+      moving_time: totalMovingTimeSeconds,
+      elapsed_time: totalElapsedTimeSeconds,
+      average_speed: totalMovingTimeSeconds > 0 ? totalDistanceMeters / totalMovingTimeSeconds : primaryActivity.average_speed,
+      max_speed: maxSpeed,
+      total_elevation_gain: totalElevationGain > 0 ? totalElevationGain : undefined,
+      calories: totalCalories > 0 ? totalCalories : undefined,
+      zone_distribution: mergedZoneDistribution,
+    };
+
+    const needsUpdate =
+      !workout.completed ||
+      workout.actualMileage !== totalMiles ||
+      !workout.stravaActivity ||
+      (workout.stravaActivity &&
+        !workout.stravaActivity.zone_distribution &&
+        mergedZoneDistribution);
+
+    if (needsUpdate) {
+      await onUpdateWorkout(workout.id, {
+        actualMileage: totalMiles,
+        completed: true,
+        stravaActivity: mergedActivity,
+      });
+      updated++;
+    }
   }
-  
-  console.log(`[Strava Sync] Complete: ${matched} matched, ${updated} updated`);
+
+  console.log(`[Strava Sync] Complete: ${matched} activities processed, ${updated} workouts updated`);
 
   return { matched, updated };
 }
